@@ -1,0 +1,24 @@
+FEATURE PLAN SNAPSHOT
+----------------------
+app_sessions              mean=9.78 std=3.63 median=10.00 min=0.00 max=26.00
+web_visits                mean=25.93 std=17.24 median=22.00 min=0.00 max=140.00
+claims_total              mean=6.46 std=2.58 median=6.00 min=0.00 max=18.00
+app_sessions_daily_avg    mean=0.70 std=0.26 median=0.71 min=0.00 max=1.86
+web_visits_daily_avg      mean=1.85 std=1.23 median=1.57 min=0.00 max=10.00
+claim_frequency           mean=0.46 std=0.18 median=0.43 min=0.00 max=1.29
+app_recency_days          mean=1.49 std=1.52 median=1.02 min=0.00 max=14.00
+web_recency_days          mean=0.88 std=1.44 median=0.43 min=0.00 max=14.00
+claim_recency_days        mean=2.75 std=2.14 median=2.00 min=1.00 max=14.00
+app_interval_std          mean=1.28 std=0.71 median=1.12 min=0.00 max=8.14
+web_interval_std          mean=0.70 std=0.60 median=0.54 min=0.00 max=8.22
+claims_icd_diversity      mean=4.65 std=1.56 median=5.00 min=0.00 max=10.00
+has_I10                   mean=0.59 std=0.49 median=1.00 min=0.00 max=1.00
+has_E119                  mean=0.59 std=0.49 median=1.00 min=0.00 max=1.00
+has_Z713                  mean=0.59 std=0.49 median=1.00 min=0.00 max=1.00
+chronic_any               mean=0.92 std=0.26 median=1.00 min=0.00 max=1.00
+app_web_ratio             mean=0.70 std=1.07 median=0.41 min=0.00 max=18.00
+claim_app_ratio           mean=0.79 std=0.56 median=0.67 min=0.00 max=10.00
+outreach                  mean=0.40 std=0.49 median=0.00 min=0.00 max=1.00
+churn                     mean=0.20 std=0.40 median=0.00 min=0.00 max=1.00
+low_engagement_flag       mean=0.30 std=0.46 median=0.00 min=0.00 max=1.00
+outreach_x_low_engagement mean=0.14 std=0.35 median=0.00 min=0.00 max=1.00
