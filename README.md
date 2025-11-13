@@ -1,5 +1,31 @@
 # Vi_home_assignment
 
+## Quick Start
+```bash
+# create & activate virtualenv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# install dependencies
+pip install -r requirements.txt
+
+# generate features
+.venv/bin/python src/feature_plan.py --data-dir data/train --output-dir feature_outputs
+.venv/bin/python src/feature_plan.py --data-dir data/test --output-dir feature_outputs_test
+
+# train both tasks (churn + benefit)
+.venv/bin/python src/train_models.py --model logistic_regression --task churn --features-path feature_outputs/features.csv --output-dir model_outputs/churn
+.venv/bin/python src/train_models.py --model logistic_regression --task benefit --features-path feature_outputs/features.csv --output-dir model_outputs/benefit
+
+# evaluate on holdout
+.venv/bin/python src/evaluate_model.py --model-path model_outputs/churn/logistic_regression.joblib --features-path feature_outputs_test/features.csv --output-dir model_outputs --split-name churn_test --task churn
+.venv/bin/python src/evaluate_model.py --model-path model_outputs/benefit/logistic_regression.joblib --features-path feature_outputs_test/features.csv --output-dir model_outputs --split-name benefit_test --task benefit
+
+# produce ranked outreach lists (top N)
+.venv/bin/python src/recommend_outreach.py --model-path model_outputs/churn/logistic_regression.joblib --features-path feature_outputs/features.csv --output-dir recommendations_churn --top-n 500 --task churn
+.venv/bin/python src/recommend_outreach.py --model-path model_outputs/benefit/logistic_regression.joblib --features-path feature_outputs/features.csv --output-dir recommendations_benefit --top-n 500 --task benefit
+```
+
 ## Approach
 - **Data understanding:** ran `src/run_eda.py` against the `data/train` tables to profile member coverage, engagement volume, ICD mix, and churn/outreach rates during the 14-day observation window.
 - **Key EDA takeaways:** members average ~10 app sessions, ~26 web visits, and ~6.5 claims, with ICD-10 codes Z71.3, I10, and E11.9 dominating; engagement coverage is nearly complete across channels.
