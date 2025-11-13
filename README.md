@@ -26,67 +26,94 @@
   ```
 
 ## Modeling
-- **Training script (`src/train_models.py`):** loads `feature_outputs/features.csv`, drops redundant columns (e.g., `claims_icd_diversity`), splits the data, scales numeric inputs when needed, and fits one of three models: logistic regression (class-weighted), random forest, or XGBoost.
-- **Commands:**  
-  ```bash
-  # Logistic regression
-  .venv/bin/python src/train_models.py \
-    --model logistic_regression \
-    --features-path feature_outputs/features.csv \
-    --output-dir model_outputs
+We maintain two logistic-regression experiments, selected via `--task`:
 
-  # Random forest
-  .venv/bin/python src/train_models.py \
-    --model random_forest \
-    --features-path feature_outputs/features.csv \
-    --output-dir model_outputs \
-    --rf-n-estimators 500 \
-    --rf-max-depth 10
+1. `--task churn` – predicts churn probability in the post-outreach window (outreach features included).
+2. `--task benefit` – drops outreach features and labels positives as `(treated & stayed) OR (untreated & churned)` to identify members who benefit from outreach.
 
-  # XGBoost
-  .venv/bin/python src/train_models.py \
-    --model xgboost \
-    --features-path feature_outputs/features.csv \
-    --output-dir model_outputs \
-    --xgb-n-estimators 800 \
-    --xgb-learning-rate 0.05 \
-    --xgb-max-depth 4 \
-    --xgb-subsample 0.8 \
-    --xgb-colsample 0.8
-  ```
-- **Artifacts:** each run saves a `<model>.joblib` plus `<model>_metrics.json`/`<model>_report.txt` describing accuracy, precision/recall/F1, ROC AUC, and confusion matrix.
+**Training commands**
+```bash
+# Churn
+.venv/bin/python src/train_models.py \
+  --model logistic_regression \
+  --task churn \
+  --features-path feature_outputs/features.csv \
+  --output-dir model_outputs/churn
+
+# Benefit
+.venv/bin/python src/train_models.py \
+  --model logistic_regression \
+  --task benefit \
+  --features-path feature_outputs/features.csv \
+  --output-dir model_outputs/benefit
+```
+Each run writes `logistic_regression.joblib`, `logistic_regression_metrics.json`, and `logistic_regression_report.txt` under the respective output directory.
 
 ## Evaluation
-- **Evaluation script (`src/evaluate_model.py`):** loads any trained pipeline plus a feature CSV (with labels) and writes `<split>_metrics.json` and `<split>_report.txt` under `model_outputs/`.
+- **Evaluation script (`src/evaluate_model.py`):** scores a trained pipeline plus any feature CSV (train/test) and writes `<split>_metrics.json` + `_report.txt`.
 - **Usage:**  
   ```bash
+  # Churn task on test split
   .venv/bin/python src/evaluate_model.py \
-    --model-path model_outputs/logistic_regression.joblib \
+    --model-path model_outputs/churn/logistic_regression.joblib \
     --features-path feature_outputs_test/features.csv \
     --output-dir model_outputs \
-    --split-name test
+    --split-name churn_test \
+    --task churn
+
+  # Benefit task on test split
+  .venv/bin/python src/evaluate_model.py \
+    --model-path model_outputs/benefit/logistic_regression.joblib \
+    --features-path feature_outputs_test/features.csv \
+    --output-dir model_outputs \
+    --split-name benefit_test \
+    --task benefit
   ```
-- **Results:** evaluated with `src/evaluate_model.py`  
-  - Logistic regression (test): accuracy ≈0.544, churn recall ≈0.543, F1 ≈0.323, ROC AUC ≈0.57 (`model_outputs/test_metrics.json`).  
-  - Random forest (test): accuracy ≈0.737, churn recall ≈0.132, F1 ≈0.168, ROC AUC ≈0.538 (`model_outputs/rf_test_metrics.json`).  
-  - XGBoost (test): accuracy ≈0.644, churn recall ≈0.274, F1 ≈0.236, ROC AUC ≈0.519 (`model_outputs/xgb_test_metrics.json`).  
-  Logistic delivers the strongest recall/ROC, while the tree models offer higher accuracy if lower recall is acceptable.
+- Metrics include accuracy, precision, recall, F1, ROC AUC, and the confusion matrix stored in JSON for downstream reporting.
 
 ## Model Interpretability
-- **Logistic regression analysis (`interpretability/logistic_regression_analysis.py`):** loads the trained logistic pipeline, extracts standardized coefficients, and saves both `interpretability_outputs/logistic_regression/coefficients.tsv` (full ranking) and `top_coefficients.png` (top-N view).
-- **Key insights:** the strongest churn reducers are the chronic-condition flags (`has_Z713`, `has_I10`, `has_E119`) and higher app engagement metrics, while signals like irregular web cadence (`web_interval_std`), higher claim-to-app ratio, or fresher claim activity push risk upward. Lower-magnitude terms such as `low_engagement_flag` and `outreach_x_low_engagement` still appear in the coefficient table, indicating modest penalties for under-engaged members and a small benefit when outreach targets that cohort.
+- **Churn model coefficients:**  
+  ```bash
+  MPLCONFIGDIR=.matplotlib .venv/bin/python interpretability/logistic_regression_analysis.py \
+    --model-path model_outputs/churn/logistic_regression.joblib \
+    --features-path feature_outputs/features.csv \
+    --output-dir interpretability_outputs/churn \
+    --top-k 15
+  ```
+  Shows which features raise or lower churn risk (e.g., chronic ICDs + high app engagement reduce churn; erratic web behavior lifts it).
+
+- **Benefit model coefficients:**  
+  ```bash
+  MPLCONFIGDIR=.matplotlib .venv/bin/python interpretability/logistic_regression_analysis.py \
+    --model-path model_outputs/benefit/logistic_regression.joblib \
+    --features-path feature_outputs/features.csv \
+    --output-dir interpretability_outputs/benefit \
+    --top-k 15
+  ```
+  Highlights which pre-outreach signals indicate someone benefited from outreach or would have if contacted (e.g., low engagement, channel ratios).
 
 ## Outreach Prioritization
-- **Ranking script (`src/recommend_outreach.py`):** scores every member with the trained pipeline, sorts by churn probability, and writes `recommendations/ranked_scores.csv`, `top_candidates.csv` (top *n*), `summary.json`, and `lift_plot.png`. By default it selects the top 500 members, but you can pass `--top-n` (absolute count) or `--top-percent` plus custom evaluation cutoffs.
-- **Usage:**  
+- **Ranking script (`src/recommend_outreach.py`):** sorts members by model score and writes `ranked_scores.csv`, `top_candidates.csv`, `summary.json`, and `lift_plot.png`. Use the matching `--task`.
   ```bash
+  # Churn list (post-outreach risk)
   .venv/bin/python src/recommend_outreach.py \
-    --model-path model_outputs/logistic_regression.joblib \
+    --model-path model_outputs/churn/logistic_regression.joblib \
     --features-path feature_outputs/features.csv \
-    --output-dir recommendations \
+    --output-dir recommendations_churn \
     --top-n 500 \
     --evaluation-counts 100,200,500,1000,2000,3000,5000 \
-    --plot-counts 100,200,500,1000,2000,3000,4000,5000
-  ```  
-  The script reports aggregate stats (avg/median predicted churn, low-engagement share, actual churn rate in train) for multiple outreach sizes and saves a cumulative-gain style plot (`lift_plot.png`) to visualize diminishing returns as `n` grows.
-- **Decision guidance:** choose `n` where marginal gains flatten relative to outreach cost/capacity; compare cohorts like top 200 vs 500 vs 1000 and ensure prioritized members align with business priorities (e.g., low-engagement or specific ICD flags).
+    --plot-counts 100,200,500,1000,2000,3000,4000,5000 \
+    --task churn
+
+  # Benefit list (people to outreach next)
+  .venv/bin/python src/recommend_outreach.py \
+    --model-path model_outputs/benefit/logistic_regression.joblib \
+    --features-path feature_outputs/features.csv \
+    --output-dir recommendations_benefit \
+    --top-n 500 \
+    --evaluation-counts 100,200,500,1000,2000,3000,5000 \
+    --plot-counts 100,200,500,1000,2000,3000,4000,5000 \
+    --task benefit
+  ```
+  - Churn output highlights high-risk members regardless of treatment (use to monitor overall churn lift).
+  - Benefit output emphasizes members who either benefited from outreach or would benefit if contacted. Filter `ranked_scores.csv` to `outreach == 0` to build the next outreach wave, while `outreach == 1` entries describe traits of outreach successes.
