@@ -1,0 +1,69 @@
+{
+  "model_path": "model_outputs/benefit/logistic_regression.joblib",
+  "features_path": "feature_outputs/features.csv",
+  "selection_count": 500,
+  "total_members": 10000,
+  "selection_fraction": 0.05,
+  "avg_predicted_churn_top_n": 0.6428836867720619,
+  "median_predicted_churn_top_n": 0.6382306103490181,
+  "low_engagement_share_top_n": 0.48,
+  "evaluation_counts": [
+    {
+      "count": 100,
+      "fraction": 0.01,
+      "avg_predicted_churn": 0.6718827896891181,
+      "median_predicted_churn": 0.6676934295795165,
+      "low_engagement_share": 0.54,
+      "actual_churn_rate": 0.28
+    },
+    {
+      "count": 200,
+      "fraction": 0.02,
+      "avg_predicted_churn": 0.6604579114043401,
+      "median_predicted_churn": 0.6566884374051463,
+      "low_engagement_share": 0.465,
+      "actual_churn_rate": 0.29
+    },
+    {
+      "count": 500,
+      "fraction": 0.05,
+      "avg_predicted_churn": 0.6428836867720619,
+      "median_predicted_churn": 0.6382306103490181,
+      "low_engagement_share": 0.48,
+      "actual_churn_rate": 0.28
+    },
+    {
+      "count": 1000,
+      "fraction": 0.1,
+      "avg_predicted_churn": 0.6268890131664892,
+      "median_predicted_churn": 0.621978178827192,
+      "low_engagement_share": 0.482,
+      "actual_churn_rate": 0.256
+    },
+    {
+      "count": 2000,
+      "fraction": 0.2,
+      "avg_predicted_churn": 0.6063490964768803,
+      "median_predicted_churn": 0.6011759326352331,
+      "low_engagement_share": 0.4765,
+      "actual_churn_rate": 0.248
+    },
+    {
+      "count": 3000,
+      "fraction": 0.3,
+      "avg_predicted_churn": 0.5904210822766519,
+      "median_predicted_churn": 0.5860855576820146,
+      "low_engagement_share": 0.47733333333333333,
+      "actual_churn_rate": 0.24066666666666667
+    },
+    {
+      "count": 5000,
+      "fraction": 0.5,
+      "avg_predicted_churn": 0.563807229286667,
+      "median_predicted_churn": 0.5577819080460658,
+      "low_engagement_share": 0.4706,
+      "actual_churn_rate": 0.2278
+    }
+  ],
+  "actual_churn_rate_top_n": 0.28
+}
